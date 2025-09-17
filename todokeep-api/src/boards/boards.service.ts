@@ -1,10 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Board, BoardDocument } from './board.schema';
 import { Model } from 'mongoose';
-import { Task, TaskDocument } from 'src/tasks/task.schema';
+import { Board, BoardDocument } from './board.schema';
+import { CreateBoardDto } from './dto/create-board.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CreateBoardDto } from './dto/create-board.dto/create-board.dto';
+import { Task } from 'src/tasks/task.schema';
 
 @Injectable()
 export class BoardsService {
@@ -16,11 +16,17 @@ export class BoardsService {
 
   async getBoardWithTasks(boardId: string) {
     const board = await this.boardModel.findById(boardId).exec();
-    if (!board) throw new NotFoundException('Board Not Found');
+    if (!board) throw new NotFoundException('Board not found');
 
-    const tasks = await this.taskModel.find({ boardId }).exec();
+    const tasks = await this.taskModel
+      .find({
+        boardId,
+      })
+      .exec();
+
     return { ...board.toObject(), tasks };
   }
+
   async findAll() {
     return this.boardModel.find().exec();
   }
@@ -35,17 +41,18 @@ export class BoardsService {
     const updated = await this.boardModel
       .findByIdAndUpdate(id, { title }, { new: true })
       .exec();
+    this.eventEmitter.emit('board.update', updated);
     return updated;
   }
 
   async delete(id: string) {
-    // 1. Delete board
-    const updated = await this.boardModel.findByIdAndDelete(id).exec();
+    // 1. Delete the board
+    await this.boardModel.findByIdAndDelete(id).exec();
 
-    // 2. Delete All taks that matching with boardId
+    // 2. Delete all tasks with matching boardId
     await this.taskModel.deleteMany({ boardId: id }).exec();
 
-    // 3. Emit Event - optional
+    // 3. Emit event (optional)
     this.eventEmitter.emit('board.delete', id);
   }
 }

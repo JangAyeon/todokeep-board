@@ -8,7 +8,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { BoardsService } from './boards.service';
-import { CreateBoardDto } from './dto/create-board.dto/create-board.dto';
+import { CreateBoardDto } from './dto/create-board.dto';
 
 @Controller('boards')
 export class BoardsController {
