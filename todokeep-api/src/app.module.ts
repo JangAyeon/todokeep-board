@@ -8,10 +8,19 @@ import { UploadModule } from './upload/upload.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { EventsGateway } from './socket/events.gateway';
-
+import { ConfigModule, ConfigService } from '@nestjs/config';
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost/todokeep-apiv2'),
+    MongooseModule.forRootAsync({
+      imports: [ConfigModule],
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => ({
+        uri: configService.get<string>('MONGODB_URI'),
+      }),
+    }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+    }),
     BoardsModule,
     TasksModule,
     UploadModule,

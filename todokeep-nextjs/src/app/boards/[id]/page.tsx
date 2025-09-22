@@ -17,7 +17,7 @@ import {
   TextField,
 } from "@mui/material";
 import socket from "@/lib/socket";
-import { BASE_URL } from "@/utils/config";
+// import { NEXT_PUBLIC_BASE_URL } from "@/utils/config";
 import { useParams } from "next/navigation";
 
 interface Task {
@@ -51,7 +51,9 @@ export default function BoardPage() {
   useEffect(() => {
     async function loadBoard() {
       try {
-        const res = await fetch(`${BASE_URL}/api/boards/${boardId}`);
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/api/boards/${boardId}`
+        );
         if (!res.ok) throw new Error("Failed to fetch board");
         const board = await res.json();
 
@@ -110,7 +112,7 @@ export default function BoardPage() {
   // Handlers
   const addTask = async () => {
     try {
-      const res = await fetch(`${BASE_URL}/api/tasks`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tasks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: "New Task", boardId }),
@@ -135,11 +137,14 @@ export default function BoardPage() {
     setTasks((prev) => prev.map((t) => (t._id === task._id ? updated : t)));
 
     try {
-      const res = await fetch(`${BASE_URL}/api/tasks/${task._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ completed: updated.completed }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/tasks/${task._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed: updated.completed }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to update task");
       const updatedTask = await res.json();
@@ -156,11 +161,14 @@ export default function BoardPage() {
     setTasks((prev) => prev.map((t) => (t._id === task._id ? updated : t)));
 
     try {
-      const res = await fetch(`${BASE_URL}/api/tasks/${task._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle }),
-      });
+      const res = await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/tasks/${task._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: newTitle }),
+        }
+      );
 
       if (!res.ok) throw new Error("Failed to update title");
       const updatedTask = await res.json();

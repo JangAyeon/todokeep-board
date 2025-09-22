@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
-    ConnectedSocket,
-MessageBody,
+  ConnectedSocket,
+  MessageBody,
   SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
@@ -8,12 +10,16 @@ MessageBody,
 import { Server, Socket } from 'socket.io';
 import { OnEvent } from '@nestjs/event-emitter';
 
-@WebSocketGateway()
+@WebSocketGateway({
+  cors: {
+    origin: '*', // 전체 허용
+    credentials: true,
+  },
+})
 export class EventsGateway {
   @WebSocketServer()
-
   server: Server;
- // Optional: Lifecycle hook - after gateway is initialized
+  // Optional: Lifecycle hook - after gateway is initialized
   afterInit(server: any) {
     console.log('WebSocket gateway initialized');
   }
@@ -28,9 +34,12 @@ export class EventsGateway {
     console.log(`Client disconnected: ${client.id}`);
   }
 
-   // Example handler for joining board room
+  // Example handler for joining board room
   @SubscribeMessage('join-board')
-  handleJoinBoard(@ConnectedSocket() client: Socket, @MessageBody() boardId: string) {
+  handleJoinBoard(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() boardId: string,
+  ) {
     client.join(boardId);
     console.log(`Client ${client.id} joined board ${boardId}`);
   }
@@ -56,6 +65,7 @@ export class EventsGateway {
   @OnEvent('task.new')
   handleTaskNew(@MessageBody() data: any): void {
     const { boardId, ...task } = data;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.server.emit('task:new', task._doc);
   }
 
@@ -63,10 +73,10 @@ export class EventsGateway {
   @OnEvent('task.update')
   handleTaskUpdate(@MessageBody() data: any): void {
     const { boardId, ...task } = data;
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.server.emit('task:update', task._doc);
   }
 
-  
   // Handle task deletion
   @OnEvent('task.delete')
   handleTaskDelete(@MessageBody() id: string): void {
