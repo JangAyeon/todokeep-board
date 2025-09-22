@@ -18,10 +18,10 @@ export class TasksController {
   findOne(@Param('id') id: string) {
     return this.tasksService.findOne(id);
   }
-  @Get()
-  findAll() {
-    return this.tasksService.findAll();
-  }
+  // @Get()
+  // findAll() {
+  //   return this.tasksService.findAll();
+  // }
 
   @Post()
   create(@Body() dto: CreateTaskDto) {

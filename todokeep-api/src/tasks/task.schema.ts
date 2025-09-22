@@ -1,4 +1,5 @@
-import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document } from 'mongoose';
 
 @Schema()
 export class Task {
@@ -11,8 +12,9 @@ export class Task {
   @Prop()
   completed: boolean;
 
+  // Reference to Board
   @Prop()
-  boardId: string;
+  boardId: string; // This links Task -> Board
 }
 
 export type TaskDocument = Task & Document;

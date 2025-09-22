@@ -1,25 +1,39 @@
-import { OnEvent } from '@nestjs/event-emitter';
 import {
-  MessageBody,
+    ConnectedSocket,
+MessageBody,
+  SubscribeMessage,
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { Socket, Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @WebSocketGateway()
 export class EventsGateway {
   @WebSocketServer()
+
   server: Server;
+ // Optional: Lifecycle hook - after gateway is initialized
+  afterInit(server: any) {
+    console.log('WebSocket gateway initialized');
+  }
 
+  // Optional: Lifecycle hook - when a client connects
   handleConnection(client: Socket) {
-    console.log(`websocket gateway initialized ${client.id}`);
+    console.log(`Client connected: ${client.id}`);
   }
 
-  handleDisconnection(client: Socket) {
-    console.log(`websocket disconnected ${client.id}`);
+  // Optional: Lifecycle hook - when a client disconnects
+  handleDisconnect(client: Socket) {
+    console.log(`Client disconnected: ${client.id}`);
   }
 
-  // ======================================================================== //
+   // Example handler for joining board room
+  @SubscribeMessage('join-board')
+  handleJoinBoard(@ConnectedSocket() client: Socket, @MessageBody() boardId: string) {
+    client.join(boardId);
+    console.log(`Client ${client.id} joined board ${boardId}`);
+  }
 
   // Handle client-side message: socket.emit('board.new', data)
   @OnEvent('board.new')
@@ -38,22 +52,24 @@ export class EventsGateway {
     this.server.emit('board:delete', id);
   }
 
-  // ======================================================================== //
-
+  // Handle task creation in a specific board
   @OnEvent('task.new')
   handleTaskNew(@MessageBody() data: any): void {
     const { boardId, ...task } = data;
     this.server.emit('task:new', task._doc);
   }
 
+  // Handle task update
   @OnEvent('task.update')
-  handleTaskUpdate(@MessageBody() data: any) {
+  handleTaskUpdate(@MessageBody() data: any): void {
     const { boardId, ...task } = data;
     this.server.emit('task:update', task._doc);
   }
 
+  
+  // Handle task deletion
   @OnEvent('task.delete')
-  handleTaskDelete(@MessageBody() id: string) {
+  handleTaskDelete(@MessageBody() id: string): void {
     this.server.emit('task:delete', id);
   }
 }
