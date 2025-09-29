@@ -9,12 +9,16 @@ export class Task {
   @Prop()
   content: string;
 
-  @Prop()
+  @Prop({ default: false })
   completed: boolean;
 
   // Reference to Board
   @Prop()
   boardId: string; // This links Task -> Board
+
+  // Order for drag and drop
+  @Prop({ default: 0 })
+  order: number;
 }
 
 export type TaskDocument = Task & Document;

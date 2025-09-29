@@ -43,6 +43,15 @@ export class EventsGateway {
     client.join(boardId);
     console.log(`Client ${client.id} joined board ${boardId}`);
   }
+  // Example handler for leaving board room
+  @SubscribeMessage('leave-board')
+  handleLeaveBoard(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() boardId: string,
+  ) {
+    client.leave(boardId);
+    console.log(`Client ${client.id} left board ${boardId}`);
+  }
 
   // Handle client-side message: socket.emit('board.new', data)
   @OnEvent('board.new')
@@ -81,5 +90,16 @@ export class EventsGateway {
   @OnEvent('task.delete')
   handleTaskDelete(@MessageBody() id: string): void {
     this.server.emit('task:delete', id);
+  }
+
+  // Handle task reorder from client
+  @SubscribeMessage('task:reorder')
+  handleTaskReorderFromClient(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { boardId: string; tasks: any[] },
+  ) {
+    // Broadcast to all clients in the same board room except sender
+    client.to(data.boardId).emit('task:reorder', data.tasks);
+    console.log(`Task reordered in board ${data.boardId}`);
   }
 }

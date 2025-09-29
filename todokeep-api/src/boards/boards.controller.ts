@@ -33,7 +33,10 @@ export class BoardsController {
   update(@Param('id') id: string, @Body('title') title: string) {
     return this.boardService.update(id, title);
   }
-
+  @Put(':id/reorder')
+  reorder(@Param('id') id: string, @Body('taskIds') taskIds: string[]) {
+    return this.boardService.reorderTasks(id, taskIds);
+  }
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.boardService.delete(id);
