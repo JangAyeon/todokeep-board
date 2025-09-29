@@ -22,6 +22,7 @@ export class BoardsService {
       .find({
         boardId,
       })
+      .sort({ order: 1 }) // Sort by order field
       .exec();
 
     return { ...board.toObject(), tasks };
@@ -54,5 +55,17 @@ export class BoardsService {
 
     // 3. Emit event (optional)
     this.eventEmitter.emit('board.delete', id);
+  }
+
+  async reorderTasks(boardId: string, taskIds: string[]) {
+    // Update order for each task
+    const updatePromises = taskIds.map((taskId, index) =>
+      this.taskModel.findByIdAndUpdate(taskId, { order: index }).exec(),
+    );
+
+    await Promise.all(updatePromises);
+
+    // Return updated tasks
+    return this.taskModel.find({ boardId }).sort({ order: 1 }).exec();
   }
 }

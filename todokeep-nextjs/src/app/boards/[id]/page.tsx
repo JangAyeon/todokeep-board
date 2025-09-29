@@ -15,10 +15,29 @@ import {
   Alert,
   Divider,
   TextField,
+  IconButton,
 } from "@mui/material";
+import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import socket from "@/lib/socket";
-// import { NEXT_PUBLIC_BASE_URL } from "@/utils/config";
 import { useParams } from "next/navigation";
+import SortableTask from "@/component/SortableTask/sortableTask";
 
 interface Task {
   _id: string;
@@ -41,7 +60,12 @@ export default function BoardPage() {
   const [editingTitle, setEditingTitle] = useState<string>("");
 
   const [mounted, setMounted] = useState(false);
-
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
   // Mark as mounted after first render
   useEffect(() => {
     setMounted(true);
@@ -98,17 +122,50 @@ export default function BoardPage() {
         setTasks((prev) => [...prev, task]);
       }
     };
-
+    const handleTaskReorder = (reorderedTasks: Task[]) => {
+      setTasks(reorderedTasks);
+    };
     socket.on("task:update", handleTaskUpdate);
     socket.on("task:new", handleNewTask);
-
+    socket.on("task:reorder", handleTaskReorder);
     return () => {
       socket.emit("leave-board", boardId);
       socket.off("task:update", handleTaskUpdate);
       socket.off("task:new", handleNewTask);
+      socket.off("task:reorder", handleTaskReorder);
     };
   }, [boardId, tasks]);
+  // Drag end handler
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
 
+    if (!over || active.id === over.id) {
+      return;
+    }
+
+    const oldIndex = tasks.findIndex((task) => task._id === active.id);
+    const newIndex = tasks.findIndex((task) => task._id === over.id);
+
+    const newTasks = arrayMove(tasks, oldIndex, newIndex);
+    setTasks(newTasks);
+
+    // Emit reorder to other clients
+    socket.emit("task:reorder", { boardId, tasks: newTasks });
+
+    // Optional: Save order to backend
+    try {
+      await fetch(
+        `${process.env.NEXT_PUBLIC_BASE_URL}/api/boards/${boardId}/reorder`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ taskIds: newTasks.map((t) => t._id) }),
+        }
+      );
+    } catch (err) {
+      console.error("Failed to save task order", err);
+    }
+  };
   // Handlers
   const addTask = async () => {
     try {
@@ -220,56 +277,56 @@ export default function BoardPage() {
         </Button>
       </Box>
 
-      <List>
-        {[...incompleteTasks, ...completedTasks].map((task, idx) => (
-          <Box key={task._id}>
-            {idx === incompleteTasks.length && incompleteTasks.length > 0 && (
-              <Divider sx={{ my: 2 }} />
-            )}
-            <ListItem disablePadding secondaryAction={null}>
-              <ListItemIcon>
-                <Checkbox
-                  edge="start"
-                  checked={Boolean(task.completed)}
-                  onChange={() => toggleComplete(task)}
-                />
-              </ListItemIcon>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <List>
+          {/* Incomplete Tasks */}
+          <SortableContext
+            items={incompleteTasks.map((t) => t._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {incompleteTasks.map((task) => (
+              <SortableTask
+                key={task._id}
+                task={task}
+                editingTaskId={editingTaskId}
+                editingTitle={editingTitle}
+                setEditingTaskId={setEditingTaskId}
+                setEditingTitle={setEditingTitle}
+                toggleComplete={toggleComplete}
+                updateTaskTitle={updateTaskTitle}
+              />
+            ))}
+          </SortableContext>
 
-              {editingTaskId === task._id ? (
-                <TextField
-                  value={editingTitle}
-                  onChange={(e) => setEditingTitle(e.target.value)}
-                  onBlur={() => {
-                    updateTaskTitle(task, editingTitle);
-                    setEditingTaskId(null);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      updateTaskTitle(task, editingTitle);
-                      setEditingTaskId(null);
-                    }
-                  }}
-                  size="small"
-                  fullWidth
-                  autoFocus
-                />
-              ) : (
-                <ListItemText
-                  primary={task.title}
-                  onClick={() => {
-                    setEditingTaskId(task._id);
-                    setEditingTitle(task.title ?? "");
-                  }}
-                  sx={{
-                    textDecoration: task.completed ? "line-through" : "none",
-                    cursor: "pointer",
-                  }}
-                />
-              )}
-            </ListItem>
-          </Box>
-        ))}
-      </List>
+          {/* Divider */}
+          {incompleteTasks.length > 0 && completedTasks.length > 0 && (
+            <Divider sx={{ my: 2 }} />
+          )}
+
+          {/* Completed Tasks */}
+          <SortableContext
+            items={completedTasks.map((t) => t._id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {completedTasks.map((task) => (
+              <SortableTask
+                key={task._id}
+                task={task}
+                editingTaskId={editingTaskId}
+                editingTitle={editingTitle}
+                setEditingTaskId={setEditingTaskId}
+                setEditingTitle={setEditingTitle}
+                toggleComplete={toggleComplete}
+                updateTaskTitle={updateTaskTitle}
+              />
+            ))}
+          </SortableContext>
+        </List>
+      </DndContext>
 
       {tasks.length === 0 && (
         <Typography align="center" sx={{ mt: 4 }} color="text.secondary">
