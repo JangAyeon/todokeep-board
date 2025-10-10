@@ -13,12 +13,7 @@ import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-interface Task {
-  _id: string;
-  title: string;
-  completed: boolean;
-  boardId: string;
-}
+import { Task, BoardWithTasks } from "@todokeep/shared";
 
 function SortableTask({
   task,

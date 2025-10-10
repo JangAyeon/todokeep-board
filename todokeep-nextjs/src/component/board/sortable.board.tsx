@@ -11,7 +11,7 @@ import TaskAltIcon from "@mui/icons-material/TaskAlt";
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Task } from "@/app/page";
+import { Task, BoardWithTasks } from "@todokeep/shared";
 
 // Sortable Board Card Component
 function SortableBoardCard({
