@@ -14,6 +14,16 @@ import { CreateBoardDto } from './dto/create-board.dto';
 export class BoardsController {
   constructor(private readonly boardService: BoardsService) {}
 
+  @Put('reorder')
+  reorderBoards(@Body('boardIds') boardIds: string[]) {
+    return this.boardService.reorderBoards(boardIds);
+  }
+
+  // New endpoint to reorder tasks within a board
+  @Put(':id/reorder')
+  reorder(@Param('id') id: string, @Body('taskIds') taskIds: string[]) {
+    return this.boardService.reorderTasks(id, taskIds);
+  }
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.boardService.getBoardWithTasks(id);
@@ -38,10 +48,7 @@ export class BoardsController {
   update(@Param('id') id: string, @Body('title') title: string) {
     return this.boardService.update(id, title);
   }
-  @Put(':id/reorder')
-  reorder(@Param('id') id: string, @Body('taskIds') taskIds: string[]) {
-    return this.boardService.reorderTasks(id, taskIds);
-  }
+
   @Delete(':id')
   delete(@Param('id') id: string) {
     return this.boardService.delete(id);
