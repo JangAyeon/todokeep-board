@@ -22,7 +22,7 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableBoardCard from "@/component/board/sortable.board";
-import { Task, BoardWithTasks } from "@todokeep/shared";
+import { BoardWithTasks } from "@todokeep/shared";
 // export interface Task {
 //   _id: string;
 //   title: string;
