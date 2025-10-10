@@ -1,11 +1,39 @@
 #!/bin/bash
-# scripts/build-web.sh - Vercel 프론트엔드 배포 스크립트
+# scripts/build-web.sh - Vercel 배포용
 
 set -e
 
 echo "🚀 Starting Web build process..."
 echo "📍 Current directory: $(pwd)"
-echo "📂 Directory contents:"
+echo "📂 Directory structure:"
+ls -la
+
+# 현재 위치 확인 및 조정
+# Vercel이 어디서 실행하든 루트를 찾아감
+if [ -f "package.json" ] && [ -d "packages" ]; then
+  # 이미 루트에 있음
+  echo "✅ Already at root directory"
+  ROOT_DIR="."
+elif [ -f "../package.json" ] && [ -d "../packages" ]; then
+  # 한 단계 위가 루트
+  echo "📍 Moving to parent directory (root)"
+  cd ..
+  ROOT_DIR="."
+elif [ -f "../../package.json" ] && [ -d "../../packages" ]; then
+  # 두 단계 위가 루트
+  echo "📍 Moving to grandparent directory (root)"
+  cd ../..
+  ROOT_DIR="."
+else
+  echo "❌ Cannot find project root!"
+  echo "Current location: $(pwd)"
+  echo "Files here:"
+  ls -la
+  exit 1
+fi
+
+echo "✅ Found project root at: $(pwd)"
+echo "📂 Root contents:"
 ls -la
 
 # 1. 의존성 설치
@@ -18,7 +46,7 @@ rm -rf todokeep-nextjs/node_modules/@todokeep
 mkdir -p todokeep-nextjs/node_modules/@todokeep
 cp -r packages/shared todokeep-nextjs/node_modules/@todokeep/
 
-echo "✅ Shared package copied"
+echo "✅ Shared package copied successfully"
 ls -la todokeep-nextjs/node_modules/@todokeep/
 
 # 3. Next.js 빌드
