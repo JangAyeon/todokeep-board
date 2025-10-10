@@ -38,6 +38,13 @@ export class BoardsController {
   update(@Param('id') id: string, @Body('title') title: string) {
     return this.boardService.update(id, title);
   }
+
+  @Put('reorder')
+  reorderBoards(@Body('boardIds') boardIds: string[]) {
+    return this.boardService.reorderBoards(boardIds);
+  }
+
+  // New endpoint to reorder tasks within a board
   @Put(':id/reorder')
   reorder(@Param('id') id: string, @Body('taskIds') taskIds: string[]) {
     return this.boardService.reorderTasks(id, taskIds);

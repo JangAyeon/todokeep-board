@@ -70,6 +70,11 @@ export class EventsGateway {
     this.server.emit('board:delete', id);
   }
 
+  @OnEvent('board.reorder')
+  handleBoardReorder(@MessageBody() boards: any[]): void {
+    this.server.emit('board:reorder', boards);
+  }
+
   // Handle task creation in a specific board
   @OnEvent('task.new')
   handleTaskNew(@MessageBody() data: any): void {

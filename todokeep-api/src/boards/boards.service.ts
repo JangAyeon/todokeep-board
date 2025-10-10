@@ -29,7 +29,7 @@ export class BoardsService {
   }
 
   async findAll() {
-    return this.boardModel.find().exec();
+    return this.boardModel.find().sort({ order: 1 }).exec();
   }
 
   async getAllBoardsWithTasks() {
@@ -83,5 +83,19 @@ export class BoardsService {
 
     // Return updated tasks
     return this.taskModel.find({ boardId }).sort({ order: 1 }).exec();
+  }
+
+  async reorderBoards(boardIds: string[]) {
+    const updatePromises = boardIds.map((boardId, index) =>
+      this.boardModel.findByIdAndUpdate(boardId, { order: index }).exec(),
+    );
+
+    await Promise.all(updatePromises);
+
+    // Return updated boards
+
+    const updatedBoards = this.boardModel.find().sort({ order: 1 }).exec();
+    this.eventEmitter.emit('board.reorder', updatedBoards);
+    return updatedBoards;
   }
 }
