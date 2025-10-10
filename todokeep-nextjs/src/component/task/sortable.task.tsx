@@ -1,42 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
-  Box,
-  Button,
   Checkbox,
-  CircularProgress,
-  Container,
-  List,
   ListItem,
   ListItemIcon,
   ListItemText,
-  Typography,
-  Alert,
-  Divider,
   TextField,
   IconButton,
 } from "@mui/material";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
+
+import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import socket from "@/lib/socket";
-import { useParams } from "next/navigation";
 
 interface Task {
   _id: string;
