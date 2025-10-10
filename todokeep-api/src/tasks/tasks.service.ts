@@ -18,16 +18,21 @@ export class TasksService {
 
   async create(dto: CreateTaskDto) {
     const created = await this.taskModel.create(dto);
+    console.log('## created Task', created);
     this.eventEmitter.emit('task.new', created);
     return created;
   }
 
-    async update(id: string, data: Partial<{ title: string; completed: boolean }>) {
-    const updated = await this.taskModel.findByIdAndUpdate(id, data, { new: true }).exec();
+  async update(
+    id: string,
+    data: Partial<{ title: string; completed: boolean }>,
+  ) {
+    const updated = await this.taskModel
+      .findByIdAndUpdate(id, data, { new: true })
+      .exec();
     this.eventEmitter.emit('task.update', updated);
     return updated;
-    }
-
+  }
 
   async delete(id: string) {
     await this.taskModel.findByIdAndDelete(id).exec();
