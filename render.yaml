@@ -1,0 +1,16 @@
+services:
+  - type: web
+    runtime: node
+    name: todokeep-api
+    region: oregon # 또는 singapore (아시아)
+    plan: free
+    buildCommand: bash scripts/build-api.sh
+    startCommand: cd todokeep-api && pnpm start:prod
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 3000
+      - key: MONGODB_URI
+        sync: false # Dashboard에서 수동 설정
+    healthCheckPath: /api

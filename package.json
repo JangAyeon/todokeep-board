@@ -1,12 +1,20 @@
 {
   "name": "todokeep-monorepo",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "dev:api": "pnpm --filter todokeep-api dev",
     "dev:web": "pnpm --filter todokeep-nextjs dev",
     "build": "pnpm -r build",
+    "build:api": "bash scripts/build-api.sh",
+    "build:web": "bash scripts/build-web.sh",
+    "test:build": "bash scripts/test-build.sh",
+    "setup": "bash scripts/setup.sh",
     "lint": "pnpm -r lint",
-    "clean": "pnpm -r exec rm -rf node_modules dist .next"
+    "clean": "pnpm -r exec rm -rf node_modules dist .next && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
   }
 }

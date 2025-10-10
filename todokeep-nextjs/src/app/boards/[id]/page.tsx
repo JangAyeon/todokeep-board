@@ -36,7 +36,7 @@ import socket from "@/lib/socket";
 import { useParams, useRouter } from "next/navigation";
 import SortableTask from "@/component/task/sortable.task";
 
-import { Task, BoardWithTasks } from "@todokeep/shared";
+import { Task } from "@todokeep/shared";
 export default function BoardPage() {
   const params = useParams();
   const router = useRouter();

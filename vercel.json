@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "bash ../scripts/build-web.sh",
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": "nextjs",
+  "regions": ["icn1"]
+}
