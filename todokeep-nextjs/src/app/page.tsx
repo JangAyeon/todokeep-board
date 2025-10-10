@@ -1,17 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import socket from "@/lib/socket";
 import AddIcon from "@mui/icons-material/Add";
-import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
-import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
-import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import DashboardOutlinedIcon from "@mui/icons-material/DashboardOutlined";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 
 import {
   DndContext,
@@ -27,114 +20,25 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   rectSortingStrategy,
-  useSortable,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+import SortableBoardCard from "@/component/board/sortable.board";
 
-// Sortable Board Card Component
-function SortableBoardCard({
-  board,
-  editingId,
-  editingTitle,
-  setEditingTitle,
-  setEditingId,
-  handleEditBoard,
-  handleDeleteBoard,
-}: any) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: board._id });
+export interface Task {
+  _id: string;
+  title: string;
+  completed: boolean;
+  boardId: string;
+}
 
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className="bg-white rounded-xl shadow-sm border border-slate-200 hover:shadow-md hover:border-slate-300 transition-all duration-200"
-    >
-      {editingId === board._id ? (
-        <div className="p-5 space-y-3">
-          <input
-            type="text"
-            value={editingTitle}
-            onChange={(e) => setEditingTitle(e.target.value)}
-            onKeyPress={(e) => e.key === "Enter" && handleEditBoard(board._id)}
-            className="w-full px-3 py-2 text-slate-900 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            autoFocus
-          />
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleEditBoard(board._id)}
-              className="flex-1 px-3 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-1"
-            >
-              <CheckIcon className="text-base" />
-              저장
-            </button>
-            <button
-              onClick={() => setEditingId(null)}
-              className="flex-1 px-3 py-2 bg-slate-200 text-slate-700 text-sm font-medium rounded-lg hover:bg-slate-300 transition-colors flex items-center justify-center gap-1"
-            >
-              <CloseIcon className="text-base" />
-              취소
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="p-5">
-          <div className="flex items-start gap-2 mb-3">
-            <button
-              {...attributes}
-              {...listeners}
-              className="cursor-grab active:cursor-grabbing text-slate-400 hover:text-slate-600 transition-colors p-1 -ml-1 touch-none"
-            >
-              <DragIndicatorIcon className="text-xl" />
-            </button>
-            <Link href={`/boards/${board._id}`} className="flex-1 block group">
-              <h3 className="text-lg font-semibold text-slate-900 group-hover:text-blue-600 transition-colors mb-1 flex items-center justify-between">
-                {board.title}
-                <ArrowForwardIcon className="text-slate-400 group-hover:text-blue-600 group-hover:translate-x-1 transition-all text-xl" />
-              </h3>
-              <p className="text-sm text-slate-500">클릭하여 열기</p>
-            </Link>
-          </div>
-          <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
-            <button
-              onClick={() => {
-                setEditingId(board._id);
-                setEditingTitle(board.title);
-              }}
-              className="flex-1 text-sm font-medium text-slate-600 hover:text-blue-600 transition-colors flex items-center justify-center gap-1"
-            >
-              <EditOutlinedIcon className="text-base" />
-              수정
-            </button>
-            <div className="w-px h-4 bg-slate-200" />
-            <button
-              onClick={() => handleDeleteBoard(board._id)}
-              className="flex-1 text-sm font-medium text-slate-600 hover:text-red-600 transition-colors flex items-center justify-center gap-1"
-            >
-              <DeleteOutlineIcon className="text-base" />
-              삭제
-            </button>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+interface BoardWithTasks {
+  _id: string;
+  title: string;
+  order: number;
+  tasks: Task[];
 }
 
 export default function Home() {
-  const [boards, setBoards] = useState<any[]>([]);
+  const [boards, setBoards] = useState<BoardWithTasks[]>([]);
   const [newBoardTitle, setNewBoardTitle] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
@@ -152,11 +56,12 @@ export default function Home() {
     })
   );
 
-  // Fetch initial boards
+  // Fetch initial boards with tasks
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/boards`)
+    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/boards/all/with-tasks`)
       .then((res) => res.json())
-      .then(setBoards);
+      .then(setBoards)
+      .catch((err) => console.error("Failed to fetch boards:", err));
   }, []);
 
   // Socket setup
@@ -164,13 +69,15 @@ export default function Home() {
     socket.emit("join-board", "all-boards");
 
     socket.on("board:new", (newBoard) => {
-      setBoards((prev) => [...prev, newBoard]);
+      setBoards((prev) => [...prev, { ...newBoard, tasks: [] }]);
     });
 
     socket.on("board:update", (updatedBoard) => {
       setBoards((prev) =>
         prev.map((board) =>
-          board._id === updatedBoard._id ? updatedBoard : board
+          board._id === updatedBoard._id
+            ? { ...board, title: updatedBoard.title }
+            : board
         )
       );
     });
@@ -180,7 +87,51 @@ export default function Home() {
     });
 
     socket.on("board:reorder", (reorderedBoards) => {
-      setBoards(reorderedBoards);
+      // Preserve tasks when reordering
+      setBoards((prev) => {
+        return reorderedBoards.map((reorderedBoard: any) => {
+          const existingBoard = prev.find((b) => b._id === reorderedBoard._id);
+          return {
+            ...reorderedBoard,
+            tasks: existingBoard?.tasks || [],
+          };
+        });
+      });
+    });
+
+    // Listen for task updates to refresh board stats
+    socket.on("task:new", (newTask) => {
+      setBoards((prev) =>
+        prev.map((board) =>
+          board._id === newTask.boardId
+            ? { ...board, tasks: [...board.tasks, newTask] }
+            : board
+        )
+      );
+    });
+
+    socket.on("task:update", (updatedTask) => {
+      setBoards((prev) =>
+        prev.map((board) =>
+          board._id === updatedTask.boardId
+            ? {
+                ...board,
+                tasks: board.tasks.map((task) =>
+                  task._id === updatedTask._id ? updatedTask : task
+                ),
+              }
+            : board
+        )
+      );
+    });
+
+    socket.on("task:delete", (deletedTaskId) => {
+      setBoards((prev) =>
+        prev.map((board) => ({
+          ...board,
+          tasks: board.tasks.filter((task) => task._id !== deletedTaskId),
+        }))
+      );
     });
 
     return () => {
@@ -188,6 +139,9 @@ export default function Home() {
       socket.off("board:update");
       socket.off("board:delete");
       socket.off("board:reorder");
+      socket.off("task:new");
+      socket.off("task:update");
+      socket.off("task:delete");
     };
   }, []);
 
@@ -328,7 +282,7 @@ export default function Home() {
           </DndContext>
         ) : (
           <div className="text-center py-16 bg-white rounded-xl border-2 border-dashed border-slate-300">
-            <div className="text-slate-300 mb-4">
+            <div className="text-slate-300 my-4">
               <DashboardOutlinedIcon sx={{ fontSize: 64 }} />
             </div>
             <p className="text-slate-600 font-medium mb-1">
