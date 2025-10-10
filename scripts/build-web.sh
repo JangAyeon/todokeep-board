@@ -4,6 +4,9 @@
 set -e
 
 echo "🚀 Starting Web build process..."
+echo "📍 Current directory: $(pwd)"
+echo "📂 Directory contents:"
+ls -la
 
 # 1. 의존성 설치
 echo "📦 Installing dependencies..."
@@ -14,6 +17,9 @@ echo "📋 Copying shared package to Web..."
 rm -rf todokeep-nextjs/node_modules/@todokeep
 mkdir -p todokeep-nextjs/node_modules/@todokeep
 cp -r packages/shared todokeep-nextjs/node_modules/@todokeep/
+
+echo "✅ Shared package copied"
+ls -la todokeep-nextjs/node_modules/@todokeep/
 
 # 3. Next.js 빌드
 echo "🏗️  Building Next.js app..."
