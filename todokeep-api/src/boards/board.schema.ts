@@ -1,7 +1,8 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { Board as IBoard } from '@todokeep/shared';
 @Schema()
-export class Board {
+export class Board implements Omit<IBoard, '_id'> {
   @Prop()
   title: string;
   // Reference to Tasks by ID (one-to-many)
