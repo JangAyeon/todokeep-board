@@ -22,7 +22,8 @@ function SortableBoardCard({
   setEditingId,
   handleEditBoard,
   handleDeleteBoard,
-}: any) {
+}: // eslint-disable-next-line @typescript-eslint/no-explicit-any
+any) {
   const {
     attributes,
     listeners,

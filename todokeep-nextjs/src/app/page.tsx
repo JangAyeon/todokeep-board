@@ -89,6 +89,7 @@ export default function Home() {
     socket.on("board:reorder", (reorderedBoards) => {
       // Preserve tasks when reordering
       setBoards((prev) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return reorderedBoards.map((reorderedBoard: any) => {
           const existingBoard = prev.find((b) => b._id === reorderedBoard._id);
           return {

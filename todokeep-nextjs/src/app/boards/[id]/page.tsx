@@ -490,7 +490,7 @@ export default function BoardPage() {
                 아직 작업이 없습니다
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                위의 '작업 추가' 버튼을 눌러 시작하세요
+                위의 `작업 추가` 버튼을 눌러 시작하세요
               </Typography>
             </Box>
           )}
