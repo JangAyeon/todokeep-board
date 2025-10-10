@@ -32,6 +32,22 @@ export class BoardsService {
     return this.boardModel.find().exec();
   }
 
+  async getAllBoardsWithTasks() {
+    const boards = await this.boardModel.find().exec();
+
+    const boardsWithTasks = await Promise.all(
+      boards.map(async (board) => {
+        const tasks = await this.taskModel
+          .find({ boardId: board._id })
+          .sort({ order: 1 }) // Sort by order field
+          .exec();
+        return { ...board.toObject(), tasks };
+      }),
+    );
+
+    return boardsWithTasks;
+  }
+
   async create(dto: CreateBoardDto) {
     const created = await this.boardModel.create(dto);
     this.eventEmitter.emit('board.new', created);
