@@ -4,20 +4,19 @@ import { useEffect, useState } from "react";
 import {
   Box,
   Button,
-  Checkbox,
   CircularProgress,
   Container,
   List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
   Typography,
   Alert,
   Divider,
-  TextField,
-  IconButton,
+  Paper,
+  Chip,
 } from "@mui/material";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
+import AddIcon from "@mui/icons-material/Add";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   DndContext,
   closestCenter,
@@ -31,12 +30,10 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  useSortable,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import socket from "@/lib/socket";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import SortableTask from "@/component/SortableTask/sortableTask";
 
 interface Task {
@@ -48,6 +45,7 @@ interface Task {
 
 export default function BoardPage() {
   const params = useParams();
+  const router = useRouter();
   const boardId = params?.id as string;
 
   // Local state
@@ -55,17 +53,17 @@ export default function BoardPage() {
   const [title, setTitle] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState<string>("");
-
   const [mounted, setMounted] = useState(false);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
+
   // Mark as mounted after first render
   useEffect(() => {
     setMounted(true);
@@ -122,12 +120,15 @@ export default function BoardPage() {
         setTasks((prev) => [...prev, task]);
       }
     };
+
     const handleTaskReorder = (reorderedTasks: Task[]) => {
       setTasks(reorderedTasks);
     };
+
     socket.on("task:update", handleTaskUpdate);
     socket.on("task:new", handleNewTask);
     socket.on("task:reorder", handleTaskReorder);
+
     return () => {
       socket.emit("leave-board", boardId);
       socket.off("task:update", handleTaskUpdate);
@@ -135,6 +136,7 @@ export default function BoardPage() {
       socket.off("task:reorder", handleTaskReorder);
     };
   }, [boardId, tasks]);
+
   // Drag end handler
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
@@ -149,10 +151,8 @@ export default function BoardPage() {
     const newTasks = arrayMove(tasks, oldIndex, newIndex);
     setTasks(newTasks);
 
-    // Emit reorder to other clients
     socket.emit("task:reorder", { boardId, tasks: newTasks });
 
-    // Optional: Save order to backend
     try {
       await fetch(
         `${process.env.NEXT_PUBLIC_BASE_URL}/api/boards/${boardId}/reorder`,
@@ -166,6 +166,7 @@ export default function BoardPage() {
       console.error("Failed to save task order", err);
     }
   };
+
   // Handlers
   const addTask = async () => {
     try {
@@ -177,7 +178,7 @@ export default function BoardPage() {
       if (!res.ok) throw new Error("Failed to create task");
       const newTask = await res.json();
       const exists = tasks.some((t) => t._id === newTask._id);
-      console.log(exists);
+
       if (exists) {
         setTasks((prev) => [...prev, newTask]);
       }
@@ -238,6 +239,10 @@ export default function BoardPage() {
   // Derived state
   const incompleteTasks = tasks.filter((t) => !t.completed);
   const completedTasks = tasks.filter((t) => t.completed);
+  const completionRate =
+    tasks.length > 0
+      ? Math.round((completedTasks.length / tasks.length) * 100)
+      : 0;
 
   // Hydration-safe rendering
   if (loading && !mounted) {
@@ -246,93 +251,251 @@ export default function BoardPage() {
         display="flex"
         justifyContent="center"
         alignItems="center"
-        minHeight="60vh"
+        minHeight="100vh"
+        sx={{ bgcolor: "grey.50" }}
       >
-        <CircularProgress />
+        <CircularProgress size={48} />
       </Box>
     );
   }
 
   if (error) {
     return (
-      <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
+      <Box
+        sx={{
+          minHeight: "100vh",
+          bgcolor: "grey.50",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 3,
+        }}
+      >
+        <Container maxWidth="sm">
+          <Alert severity="error" sx={{ borderRadius: 2 }}>
+            {error}
+          </Alert>
+        </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        mb={3}
-      >
-        <Typography variant="h5" fontWeight="bold">
-          {title}
-        </Typography>
-        <Button variant="contained" onClick={addTask}>
-          Add Task
-        </Button>
-      </Box>
+    <Box sx={{ minHeight: "100vh", bgcolor: "grey.50", py: 4 }}>
+      <Container maxWidth="md">
+        {/* Header */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            mb: 3,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "grey.200",
+          }}
+        >
+          <Box display="flex" alignItems="center" gap={2} mb={2}>
+            <Button
+              variant="text"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => router.push("/")}
+              sx={{
+                color: "text.secondary",
+                textTransform: "none",
+                "&:hover": { bgcolor: "grey.100" },
+              }}
+            >
+              보드로 돌아가기
+            </Button>
+          </Box>
 
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <List>
-          {/* Incomplete Tasks */}
-          <SortableContext
-            items={incompleteTasks.map((t) => t._id)}
-            strategy={verticalListSortingStrategy}
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="wrap"
+            gap={2}
           >
-            {incompleteTasks.map((task) => (
-              <SortableTask
-                key={task._id}
-                task={task}
-                editingTaskId={editingTaskId}
-                editingTitle={editingTitle}
-                setEditingTaskId={setEditingTaskId}
-                setEditingTitle={setEditingTitle}
-                toggleComplete={toggleComplete}
-                updateTaskTitle={updateTaskTitle}
-              />
-            ))}
-          </SortableContext>
+            <Box>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ color: "grey.900", mb: 1 }}
+              >
+                {title}
+              </Typography>
+              <Box display="flex" alignItems="center" gap={2}>
+                <Chip
+                  icon={<RadioButtonUncheckedIcon />}
+                  label={`${incompleteTasks.length} 진행중`}
+                  size="small"
+                  sx={{
+                    bgcolor: "blue.50",
+                    color: "blue.700",
+                    fontWeight: 500,
+                  }}
+                />
+                <Chip
+                  icon={<CheckCircleOutlineIcon />}
+                  label={`${completedTasks.length} 완료`}
+                  size="small"
+                  sx={{
+                    bgcolor: "green.50",
+                    color: "green.700",
+                    fontWeight: 500,
+                  }}
+                />
+                {tasks.length > 0 && (
+                  <Typography variant="body2" color="text.secondary">
+                    {completionRate}% 완료
+                  </Typography>
+                )}
+              </Box>
+            </Box>
 
-          {/* Divider */}
-          {incompleteTasks.length > 0 && completedTasks.length > 0 && (
-            <Divider sx={{ my: 2 }} />
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={addTask}
+              sx={{
+                bgcolor: "blue.600",
+                textTransform: "none",
+                px: 3,
+                py: 1.25,
+                borderRadius: 2,
+                fontWeight: 600,
+                boxShadow: "none",
+                "&:hover": {
+                  bgcolor: "blue.700",
+                  boxShadow: "0 4px 12px rgba(37, 99, 235, 0.2)",
+                },
+              }}
+            >
+              작업 추가
+            </Button>
+          </Box>
+        </Paper>
+
+        {/* Tasks List */}
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            borderRadius: 3,
+            border: "1px solid",
+            borderColor: "grey.200",
+            minHeight: 400,
+          }}
+        >
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <List sx={{ p: 0 }}>
+              {/* Incomplete Tasks */}
+              {incompleteTasks.length > 0 && (
+                <Box mb={2}>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 600,
+                      letterSpacing: 1,
+                      display: "block",
+                      mb: 1,
+                    }}
+                  >
+                    진행중 ({incompleteTasks.length})
+                  </Typography>
+                  <SortableContext
+                    items={incompleteTasks.map((t) => t._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {incompleteTasks.map((task) => (
+                      <SortableTask
+                        key={task._id}
+                        task={task}
+                        editingTaskId={editingTaskId}
+                        editingTitle={editingTitle}
+                        setEditingTaskId={setEditingTaskId}
+                        setEditingTitle={setEditingTitle}
+                        toggleComplete={toggleComplete}
+                        updateTaskTitle={updateTaskTitle}
+                      />
+                    ))}
+                  </SortableContext>
+                </Box>
+              )}
+
+              {/* Divider */}
+              {incompleteTasks.length > 0 && completedTasks.length > 0 && (
+                <Divider sx={{ my: 3 }} />
+              )}
+
+              {/* Completed Tasks */}
+              {completedTasks.length > 0 && (
+                <Box>
+                  <Typography
+                    variant="overline"
+                    sx={{
+                      color: "text.secondary",
+                      fontWeight: 600,
+                      letterSpacing: 1,
+                      display: "block",
+                      mb: 1,
+                    }}
+                  >
+                    완료됨 ({completedTasks.length})
+                  </Typography>
+                  <SortableContext
+                    items={completedTasks.map((t) => t._id)}
+                    strategy={verticalListSortingStrategy}
+                  >
+                    {completedTasks.map((task) => (
+                      <SortableTask
+                        key={task._id}
+                        task={task}
+                        editingTaskId={editingTaskId}
+                        editingTitle={editingTitle}
+                        setEditingTaskId={setEditingTaskId}
+                        setEditingTitle={setEditingTitle}
+                        toggleComplete={toggleComplete}
+                        updateTaskTitle={updateTaskTitle}
+                      />
+                    ))}
+                  </SortableContext>
+                </Box>
+              )}
+            </List>
+          </DndContext>
+
+          {/* Empty State */}
+          {tasks.length === 0 && (
+            <Box
+              display="flex"
+              flexDirection="column"
+              alignItems="center"
+              justifyContent="center"
+              py={8}
+            >
+              <CheckCircleOutlineIcon
+                sx={{ fontSize: 64, color: "grey.300", mb: 2 }}
+              />
+              <Typography
+                variant="h6"
+                color="text.secondary"
+                sx={{ mb: 1, fontWeight: 500 }}
+              >
+                아직 작업이 없습니다
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                위의 '작업 추가' 버튼을 눌러 시작하세요
+              </Typography>
+            </Box>
           )}
-
-          {/* Completed Tasks */}
-          <SortableContext
-            items={completedTasks.map((t) => t._id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {completedTasks.map((task) => (
-              <SortableTask
-                key={task._id}
-                task={task}
-                editingTaskId={editingTaskId}
-                editingTitle={editingTitle}
-                setEditingTaskId={setEditingTaskId}
-                setEditingTitle={setEditingTitle}
-                toggleComplete={toggleComplete}
-                updateTaskTitle={updateTaskTitle}
-              />
-            ))}
-          </SortableContext>
-        </List>
-      </DndContext>
-
-      {tasks.length === 0 && (
-        <Typography align="center" sx={{ mt: 4 }} color="text.secondary">
-          No tasks yet — add one above.
-        </Typography>
-      )}
-    </Container>
+        </Paper>
+      </Container>
+    </Box>
   );
 }
