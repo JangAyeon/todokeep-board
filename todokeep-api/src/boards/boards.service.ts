@@ -94,7 +94,12 @@ export class BoardsService {
 
     // Return updated boards
 
-    const updatedBoards = this.boardModel.find().sort({ order: 1 }).exec();
+    const updatedBoards = await this.boardModel
+      .find()
+      .sort({ order: 1 })
+      .exec();
+
+    // console.log('Reordered Boards:', updatedBoards);
     this.eventEmitter.emit('board.reorder', updatedBoards);
     return updatedBoards;
   }
