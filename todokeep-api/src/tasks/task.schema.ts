@@ -1,8 +1,8 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
-
+import { Task as ITask } from '@todokeep/shared';
 @Schema()
-export class Task {
+export class Task implements Omit<ITask, '_id'> {
   @Prop()
   title: string;
 

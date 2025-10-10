@@ -22,20 +22,20 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import SortableBoardCard from "@/component/board/sortable.board";
+import { Task, BoardWithTasks } from "@todokeep/shared";
+// export interface Task {
+//   _id: string;
+//   title: string;
+//   completed: boolean;
+//   boardId: string;
+// }
 
-export interface Task {
-  _id: string;
-  title: string;
-  completed: boolean;
-  boardId: string;
-}
-
-interface BoardWithTasks {
-  _id: string;
-  title: string;
-  order: number;
-  tasks: Task[];
-}
+// interface BoardWithTasks {
+//   _id: string;
+//   title: string;
+//   order: number;
+//   tasks: Task[];
+// }
 
 export default function Home() {
   const [boards, setBoards] = useState<BoardWithTasks[]>([]);
