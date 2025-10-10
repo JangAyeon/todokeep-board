@@ -24,6 +24,11 @@ export class BoardsController {
     return this.boardService.findAll();
   }
 
+  @Get('all/with-tasks')
+  getAllBoardsWithTasks() {
+    return this.boardService.getAllBoardsWithTasks();
+  }
+
   @Post()
   create(@Body() dto: CreateBoardDto) {
     return this.boardService.create(dto);
