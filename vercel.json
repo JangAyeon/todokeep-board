@@ -1,6 +1,0 @@
-{
-  "buildCommand": "pnpm install --frozen-lockfile && mkdir -p todokeep-nextjs/node_modules/@todokeep && cp -r packages/shared todokeep-nextjs/node_modules/@todokeep/ && cd todokeep-nextjs && pnpm build",
-  "outputDirectory": "todokeep-nextjs/.next",
-  "installCommand": "echo 'Handled in buildCommand'",
-  "framework": "nextjs"
-}
