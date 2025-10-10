@@ -1,3 +1,4 @@
 packages:
   - "todokeep-api"
   - "todokeep-nextjs"
+  - "packages/*"
